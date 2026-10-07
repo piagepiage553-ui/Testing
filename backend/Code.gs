@@ -83,8 +83,21 @@ function collect_() {
   return { sources: sources, points: points };
 }
 
+// Works both pasted into a sheet (Extensions > Apps Script) and as a standalone
+// project at script.google.com, where it creates its own spreadsheet on first run.
+function spreadsheet_() {
+  var props = PropertiesService.getScriptProperties();
+  var id = props.getProperty('SHEET_ID');
+  if (id) return SpreadsheetApp.openById(id);
+  var active = SpreadsheetApp.getActiveSpreadsheet();
+  if (active) return active;
+  var created = SpreadsheetApp.create('AI Compass responses');
+  props.setProperty('SHEET_ID', created.getId());
+  return created;
+}
+
 function sheet_() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var ss = spreadsheet_();
   var sheet = ss.getSheetByName(SHEET_NAME);
   if (!sheet) {
     sheet = ss.insertSheet(SHEET_NAME);
@@ -123,7 +136,8 @@ function writeCache_(cache, body) {
   try { cache.putAll(entries, CACHE_SECONDS); } catch (err) { /* too large to cache; serve uncached */ }
 }
 
-/** Run once from the editor to create the sheet tab and grant permissions. */
+/** Run once from the editor to create the sheet and grant permissions. */
 function setup() {
-  sheet_();
+  var sheet = sheet_();
+  Logger.log('Responses go to: ' + sheet.getParent().getUrl());
 }
