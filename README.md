@@ -9,11 +9,9 @@ Dotted lines mark intermediate phases. After submitting, visitors see every dot,
 
 The site is a single static page (`index.html`). Responses go to a Google Sheet through a small Apps Script (`backend/Code.gs`).
 
-## 1. Publish the site (GitHub Pages)
+## 1. Publish the site (Netlify)
 
-1. Repo **Settings → Pages**.
-2. **Source:** Deploy from a branch. **Branch:** the branch holding `index.html`, folder `/ (root)`. Save.
-3. After a minute the site is live at `https://piagepiage553-ui.github.io/Testing/`.
+The site is hosted on Netlify, connected to this repo's `main` branch with no build command, so every push to `main` redeploys it. It's live at `https://where-do-you-land-on-ai.netlify.app/`.
 
 Until step 2 below is done, the page runs in preview mode: everything works, but dots are only saved in the visitor's own browser.
 
@@ -36,9 +34,9 @@ If you later edit `Code.gs`, use **Deploy → Manage deployments → Edit → Ne
 
 Add `?r=<subreddit>` to the link for each post, so results can be split by community:
 
-- `https://piagepiage553-ui.github.io/Testing/?r=betteroffline`
-- `https://piagepiage553-ui.github.io/Testing/?r=singularity`
-- `https://piagepiage553-ui.github.io/Testing/?r=technology`
+- `https://where-do-you-land-on-ai.netlify.app/?r=betteroffline`
+- `https://where-do-you-land-on-ai.netlify.app/?r=singularity`
+- `https://where-do-you-land-on-ai.netlify.app/?r=technology`
 
 The results view shows a filter chip per community, with its own average and quadrant split. Visitors from a plain link are counted as "Direct link".
 
