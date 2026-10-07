@@ -19,7 +19,7 @@ Until step 2 below is done, the page runs in preview mode: everything works, but
 
 1. Create a new Google Sheet (sheets.new). Name it anything, e.g. "AI Compass responses".
 2. In the sheet: **Extensions → Apps Script**. Delete the starter code and paste in all of `backend/Code.gs`. Save. (On Android, where Sheets links open in the app, skip step 1 and start a new project at script.google.com instead; the script creates its own spreadsheet.)
-3. In the function dropdown pick `setup` and press **Run**. Approve the permissions prompt (it only needs this one spreadsheet). A `responses` tab appears in the sheet.
+3. In the function dropdown pick `setup` and press **Run**. Approve the permissions prompt (Google words it as access to your spreadsheets; the script only touches the one it uses). A `responses` tab appears in the sheet.
 4. **Deploy → New deployment**. Gear icon → **Web app**.
    - Execute as: **Me**
    - Who has access: **Anyone**
