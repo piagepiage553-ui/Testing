@@ -1,0 +1,845 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<!--ARTIFACT-START-->
+<title>The AI Compass</title>
+<meta name="description" content="One dot, two questions: will AI be good or bad for humanity, and how capable will it get? Place your dot and see where everyone else landed.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="The AI Compass: where do you land on AI?">
+<meta property="og:description" content="Will AI kill us all or build a utopia? Is it a stochastic parrot or a machine god? Drop one dot, then see where everyone else landed.">
+<meta property="og:image" content="https://piagepiage553-ui.github.io/Testing/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one narrow column; a square graph-paper chart is the page, the panel beneath it swaps between "place your dot" and "results". */
+:root {
+  --paper: #EBEFF3;
+  --surface: #F8FAFB;
+  --ink: #111A23;
+  --muted: #5B6B7A;
+  --grid: #A9B6C2;
+  --line: #CDD5DD;
+  --doom: #BF3D26;
+  --hope: #157F62;
+  --you: #3B2BD6;
+  --you-ring: #FFFFFF;
+  --crowd: #2A3846;
+  --font-display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --font-body: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0C1116; --surface: #121921; --ink: #E3E9EF; --muted: #8E9DAB;
+    --grid: #3A4855; --line: #26323D; --doom: #E2694F; --hope: #3DBE95;
+    --you: #9A8CFF; --you-ring: #0C1116; --crowd: #C9D4DE; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #0C1116; --surface: #121921; --ink: #E3E9EF; --muted: #8E9DAB;
+  --grid: #3A4855; --line: #26323D; --doom: #E2694F; --hope: #3DBE95;
+  --you: #9A8CFF; --you-ring: #0C1116; --crowd: #C9D4DE; color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { background: var(--paper); }
+body {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-text-size-adjust: 100%;
+}
+.wrap {
+  max-width: 600px;
+  margin: 0 auto;
+  padding-inline: 16px;
+  padding-block: 28px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ---------- header ---------- */
+header { display: flex; flex-direction: column; gap: 8px; }
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0;
+}
+h1 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-stretch: 125%;
+  font-weight: 800;
+  font-size: clamp(28px, 7vw, 40px);
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+.lede { margin: 0; color: var(--muted); max-width: 60ch; }
+.axes-key {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 10px;
+  margin: 4px 0 0;
+  font-size: 14px;
+}
+.axes-key dt {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.axes-key dd { margin: 0; }
+
+/* ---------- chart ---------- */
+.chart { display: flex; flex-direction: column; gap: 6px; }
+.plot {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  aspect-ratio: 1 / 1;
+  background:
+    linear-gradient(90deg,
+      color-mix(in srgb, var(--doom) 11%, transparent),
+      transparent 38%, transparent 62%,
+      color-mix(in srgb, var(--hope) 11%, transparent)),
+    var(--surface);
+  border: 1.5px solid var(--ink);
+  border-radius: 2px;
+  overflow: hidden;
+  cursor: crosshair;
+  touch-action: pan-y;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+}
+.plot:focus-visible { box-shadow: 0 0 0 3px color-mix(in srgb, var(--you) 45%, transparent); }
+body[data-mode="results"] .plot { cursor: default; }
+.plot svg, .plot canvas {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  pointer-events: none;
+}
+.grid-fine { stroke: var(--line); stroke-width: 1; }
+.grid-phase { stroke: var(--grid); stroke-width: 1.25; stroke-dasharray: 2 5; stroke-linecap: round; }
+.grid-axis { stroke: var(--ink); stroke-width: 1.5; opacity: 0.75; }
+
+.band-y {
+  position: absolute;
+  left: 6px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  line-height: 1.2;
+  color: var(--muted);
+  pointer-events: none;
+  margin-top: 3px;
+  padding: 0 2px;
+  max-width: 40%;
+  background: color-mix(in srgb, var(--surface) 75%, transparent);
+}
+.pole {
+  position: absolute;
+  font-family: var(--font-display);
+  font-stretch: 112%;
+  font-weight: 700;
+  font-size: 12px;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  padding: 5px 7px;
+  background: var(--surface);
+  border: 1px solid currentColor;
+  border-radius: 2px;
+  pointer-events: none;
+  white-space: nowrap;
+}
+.pole-top { top: 7px; left: 50%; transform: translateX(-50%); }
+.pole-bottom { bottom: 7px; left: 50%; transform: translateX(-50%); }
+.pole-left { left: 7px; top: 50%; transform: translateY(-50%); color: var(--doom); }
+.pole-right { right: 7px; top: 50%; transform: translateY(-50%); color: var(--hope); }
+
+.hint {
+  position: absolute;
+  left: 50%; top: 31%;
+  transform: translate(-50%, -50%);
+  font-size: 14px;
+  color: var(--muted);
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  padding: 6px 10px;
+  border-radius: 2px;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.you {
+  position: absolute;
+  width: 48px; height: 48px;
+  margin: -24px 0 0 -24px;
+  display: grid; place-items: center;
+  touch-action: none;
+  cursor: grab;
+  z-index: 3;
+}
+.you:active { cursor: grabbing; }
+.you::before {
+  content: "";
+  position: absolute; inset: 6px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--you) 16%, transparent);
+  transform: scale(0.6);
+  transition: transform 160ms ease;
+}
+.plot.dragging .you::before { transform: scale(1); }
+.you-dot {
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: var(--you);
+  border: 3px solid var(--you-ring);
+  box-shadow: 0 0 0 1.5px var(--you), 0 2px 6px rgba(0,0,0,0.25);
+}
+.you-tag {
+  position: absolute;
+  left: 50%; bottom: 100%;
+  transform: translate(-50%, 4px);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--surface);
+  background: var(--you);
+  padding: 1px 5px;
+  border-radius: 2px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+body[data-mode="results"] .you { cursor: default; pointer-events: none; }
+
+.avg {
+  position: absolute;
+  width: 26px; height: 26px;
+  margin: -13px 0 0 -13px;
+  pointer-events: none;
+  z-index: 2;
+}
+.avg::before, .avg::after {
+  content: ""; position: absolute; background: var(--ink);
+  box-shadow: 0 0 0 1.5px var(--surface);
+}
+.avg::before { left: 12px; top: 0; width: 2px; height: 26px; }
+.avg::after { top: 12px; left: 0; height: 2px; width: 26px; }
+.avg span {
+  position: absolute; left: 30px; top: 50%; transform: translateY(-50%);
+  font-family: var(--font-mono); font-size: 11px; font-weight: 500;
+  background: var(--ink); color: var(--surface);
+  padding: 1px 5px; border-radius: 2px; white-space: nowrap;
+}
+.avg.flip span { left: auto; right: 30px; }
+
+.bands-x {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  line-height: 1.25;
+  color: var(--muted);
+  text-align: center;
+}
+.bands-x span { padding-inline: 2px; }
+.bands-x span:first-child { color: var(--doom); }
+.bands-x span:last-child { color: var(--hope); }
+.axis-titles {
+  display: flex; justify-content: space-between; gap: 12px;
+  font-size: 12px; color: var(--muted);
+}
+
+/* ---------- panels ---------- */
+.panel { display: flex; flex-direction: column; gap: 14px; }
+.readout {
+  display: flex; flex-direction: column; gap: 2px;
+  min-height: 52px;
+}
+.readout-zone {
+  font-family: var(--font-display);
+  font-stretch: 112%;
+  font-weight: 700;
+  font-size: 19px;
+  line-height: 1.2;
+}
+.readout-zone .sep { color: var(--muted); font-weight: 400; }
+.readout-coords {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+button {
+  font: inherit;
+  font-family: var(--font-display);
+  font-stretch: 112%;
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0.01em;
+  border-radius: 2px;
+  padding: 12px 18px;
+  cursor: pointer;
+  border: 1.5px solid var(--ink);
+  background: transparent;
+  color: var(--ink);
+  min-height: 46px;
+}
+button.primary { background: var(--you); border-color: var(--you); color: var(--surface); }
+button:disabled { opacity: 0.4; cursor: not-allowed; }
+button:focus-visible { outline: 3px solid color-mix(in srgb, var(--you) 50%, transparent); outline-offset: 2px; }
+.linkish {
+  border: 0; padding: 4px 0; min-height: 0;
+  font-family: var(--font-body); font-stretch: 100%; font-weight: 500; font-size: 14px;
+  color: var(--muted); text-decoration: underline; text-underline-offset: 3px;
+}
+.msg { margin: 0; font-size: 14px; color: var(--muted); }
+.msg.error { color: var(--doom); }
+.notice {
+  margin: 0;
+  font-size: 13px;
+  padding: 10px 12px;
+  border: 1px dashed var(--grid);
+  color: var(--muted);
+}
+
+h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-stretch: 125%;
+  font-weight: 800;
+  font-size: 22px;
+  line-height: 1.15;
+  text-wrap: balance;
+}
+.count { font-family: var(--font-mono); font-size: 13px; color: var(--muted); margin: 2px 0 0; font-variant-numeric: tabular-nums; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  min-height: 34px;
+  padding: 6px 11px;
+  font-family: var(--font-mono);
+  font-stretch: 100%;
+  font-weight: 500;
+  font-size: 13px;
+  border: 1px solid var(--grid);
+  color: var(--ink);
+}
+.chip[aria-pressed="true"] { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+.chip .n { opacity: 0.65; margin-left: 4px; }
+
+.quads {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border: 1.5px solid var(--ink);
+}
+.quad {
+  padding: 10px 12px;
+  display: flex; flex-direction: column; gap: 2px;
+  min-width: 0;
+}
+.quad:nth-child(1), .quad:nth-child(2) { border-bottom: 1px dashed var(--grid); }
+.quad:nth-child(odd) { border-right: 1px dashed var(--grid); }
+.quad-pct {
+  font-family: var(--font-display);
+  font-stretch: 112%;
+  font-weight: 800;
+  font-size: 26px;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+.quad-name { font-size: 13px; line-height: 1.3; }
+.quad-n { font-family: var(--font-mono); font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.quad.l .quad-pct { color: var(--doom); }
+.quad.r .quad-pct { color: var(--hope); }
+.avg-line { margin: 0; font-size: 14px; }
+.avg-line strong { font-weight: 700; }
+
+footer {
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+footer p { margin: 0; max-width: 62ch; }
+
+@media (prefers-reduced-motion: reduce) {
+  .you::before { transition: none; }
+}
+@media (max-width: 380px) {
+  .pole { font-size: 10.5px; padding: 4px 5px; }
+  .band-y, .bands-x { font-size: 9.5px; }
+}
+</style>
+</head>
+<body data-mode="edit">
+<div class="wrap">
+  <header>
+    <p class="eyebrow">A one-dot survey</p>
+    <h1>Where do you land on AI?</h1>
+    <p class="lede">Two questions, one dot. Tap the chart to place it, drag until it feels right, then submit to see where everyone else landed.</p>
+    <dl class="axes-key">
+      <dt>← →</dt><dd>How does AI turn out for humanity?</dd>
+      <dt>↓ ↑</dt><dd>How useful and capable can AI ultimately get?</dd>
+    </dl>
+  </header>
+
+  <section class="chart" aria-label="Survey chart">
+    <div class="plot" id="plot" tabindex="0" role="application"
+         aria-label="Chart. Horizontal axis: benefit to society, from AI kills us all on the left to AI creates a utopia on the right. Vertical axis: potential usefulness, from stochastic parrot at the bottom to machine god at the top. Click or tap to place your dot. Arrow keys move it, Enter submits.">
+      <svg viewBox="0 0 200 200" preserveAspectRatio="none" aria-hidden="true">
+        <g class="grid-fine" id="fineGrid"></g>
+        <g class="grid-phase">
+          <line x1="40" y1="0" x2="40" y2="200" vector-effect="non-scaling-stroke"/>
+          <line x1="80" y1="0" x2="80" y2="200" vector-effect="non-scaling-stroke"/>
+          <line x1="120" y1="0" x2="120" y2="200" vector-effect="non-scaling-stroke"/>
+          <line x1="160" y1="0" x2="160" y2="200" vector-effect="non-scaling-stroke"/>
+          <line x1="0" y1="40" x2="200" y2="40" vector-effect="non-scaling-stroke"/>
+          <line x1="0" y1="80" x2="200" y2="80" vector-effect="non-scaling-stroke"/>
+          <line x1="0" y1="120" x2="200" y2="120" vector-effect="non-scaling-stroke"/>
+          <line x1="0" y1="160" x2="200" y2="160" vector-effect="non-scaling-stroke"/>
+        </g>
+        <g class="grid-axis">
+          <line x1="100" y1="0" x2="100" y2="200" vector-effect="non-scaling-stroke"/>
+          <line x1="0" y1="100" x2="200" y2="100" vector-effect="non-scaling-stroke"/>
+        </g>
+      </svg>
+      <canvas id="crowd" aria-hidden="true"></canvas>
+
+      <span class="band-y" style="top:0%">Superhuman</span>
+      <span class="band-y" style="top:20%">Industrial revolution</span>
+      <span class="band-y" style="top:40%">Internet-sized</span>
+      <span class="band-y" style="top:60%">Handy tool</span>
+      <span class="band-y" style="top:80%">Fancy autocomplete</span>
+
+      <span class="pole pole-top">Machine god</span>
+      <span class="pole pole-bottom">Stochastic parrot</span>
+      <span class="pole pole-left">AI kills us all</span>
+      <span class="pole pole-right">AI creates a utopia</span>
+
+      <span class="hint" id="hint">Tap to place your dot</span>
+      <div class="avg" id="avg" hidden><span>avg</span></div>
+      <div class="you" id="you" hidden><span class="you-dot"></span><span class="you-tag">you</span></div>
+    </div>
+    <div class="bands-x" aria-hidden="true">
+      <span>Catastrophic</span><span>Net harmful</span><span>Mixed bag</span><span>Net helpful</span><span>Golden age</span>
+    </div>
+    <div class="axis-titles" aria-hidden="true">
+      <span>← worse for humanity</span><span>better for humanity →</span>
+    </div>
+  </section>
+
+  <!-- Place your dot -->
+  <section class="panel" id="editPanel">
+    <div class="readout" aria-live="polite">
+      <div class="readout-zone" id="zone">No dot yet</div>
+      <div class="readout-coords" id="coords">Tap anywhere on the chart. You can drag it around before you submit.</div>
+    </div>
+    <div class="actions">
+      <button class="primary" id="submitBtn" disabled>Submit my dot</button>
+      <button class="linkish" id="peekBtn" type="button">See results first</button>
+    </div>
+    <p class="msg" id="editMsg" hidden></p>
+  </section>
+
+  <!-- Results -->
+  <section class="panel" id="resultsPanel" hidden>
+    <div>
+      <h2>Where everyone landed</h2>
+      <p class="count" id="count">Loading dots…</p>
+    </div>
+    <p class="notice" id="demoNotice" hidden>Preview mode. The results sheet isn't connected yet, so your dot is saved only in this browser.</p>
+    <div class="chips" id="chips" role="group" aria-label="Filter by community"></div>
+    <p class="avg-line" id="avgLine" hidden></p>
+    <div class="quads" id="quads">
+      <div class="quad l" data-q="tl"><span class="quad-pct">–</span><span class="quad-name">Powerful and dangerous</span><span class="quad-n"></span></div>
+      <div class="quad r" data-q="tr"><span class="quad-pct">–</span><span class="quad-name">Powerful and benevolent</span><span class="quad-n"></span></div>
+      <div class="quad l" data-q="bl"><span class="quad-pct">–</span><span class="quad-name">Limited but harmful</span><span class="quad-n"></span></div>
+      <div class="quad r" data-q="br"><span class="quad-pct">–</span><span class="quad-name">Limited but helpful</span><span class="quad-n"></span></div>
+    </div>
+    <div class="actions">
+      <button class="primary" id="moveBtn" type="button">Move my dot</button>
+      <button id="refreshBtn" type="button">Refresh</button>
+      <button id="copyBtn" type="button">Copy link</button>
+    </div>
+    <p class="msg" id="resultsMsg" hidden></p>
+  </section>
+
+  <footer>
+    <p>Anonymous. The survey stores your dot's position, a random ID so you can move your dot later, and which link you arrived from. One dot per browser.</p>
+  </footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  // Google Apps Script web app URL (see README.md). Empty = preview mode, nothing leaves the browser.
+  var ENDPOINT = "";
+
+  var STORE_KEY = "aicompass.v1";
+  var BANDS_X = [["Catastrophic", -60], ["Net harmful", -20], ["Mixed bag", 20], ["Net helpful", 60], ["Golden age", 100]];
+  var BANDS_Y = [["Fancy autocomplete", -60], ["Handy tool", -20], ["Internet-sized", 20], ["Industrial revolution", 60], ["Superhuman", 100]];
+
+  var $ = function (id) { return document.getElementById(id); };
+  var plot = $("plot"), you = $("you"), hint = $("hint"), avgEl = $("avg"), canvas = $("crowd");
+
+  // ---------- storage (best effort) ----------
+  function load() {
+    try { return JSON.parse(localStorage.getItem(STORE_KEY)) || {}; } catch (e) { return {}; }
+  }
+  function save() {
+    try {
+      localStorage.setItem(STORE_KEY, JSON.stringify({
+        id: state.id, src: state.src, x: state.x, y: state.y,
+        submitted: state.submitted, peeked: state.peeked
+      }));
+    } catch (e) { /* storage unavailable */ }
+  }
+  function newId() {
+    var a = new Uint8Array(12);
+    (window.crypto || window.msCrypto).getRandomValues(a);
+    return "v" + Array.prototype.map.call(a, function (b) { return ("0" + b.toString(16)).slice(-2); }).join("");
+  }
+  function sourceFromUrl() {
+    try {
+      var p = new URLSearchParams(location.search);
+      var raw = (p.get("r") || p.get("src") || "").toLowerCase().replace(/^\/?r\//, "").replace(/[^a-z0-9_]/g, "").slice(0, 30);
+      return raw || null;
+    } catch (e) { return null; }
+  }
+
+  var saved = load();
+  var state = {
+    id: saved.id || newId(),
+    src: sourceFromUrl() || saved.src || "direct",
+    x: typeof saved.x === "number" ? saved.x : null,
+    y: typeof saved.y === "number" ? saved.y : null,
+    submitted: !!saved.submitted,
+    peeked: !!saved.peeked,
+    mode: saved.submitted ? "results" : "edit"
+  };
+  save();
+
+  var data = null;        // { sources: [...], points: [x, y, si, x, y, si, ...] }
+  var filter = "all";
+
+  // ---------- helpers ----------
+  function clamp(v) { return Math.max(-100, Math.min(100, Math.round(v))); }
+  function band(bands, v) {
+    for (var i = 0; i < bands.length; i++) if (v <= bands[i][1]) return bands[i][0];
+    return bands[bands.length - 1][0];
+  }
+  function signed(v) { return v > 0 ? "+" + v : v < 0 ? "−" + Math.abs(v) : "0"; }
+  function pctX(x) { return (x + 100) / 2 + "%"; }
+  function pctY(y) { return (100 - y) / 2 + "%"; }
+  function srcLabel(s) { return s === "direct" ? "Direct link" : "r/" + s; }
+  function fmt(n) { return n.toLocaleString("en-US"); }
+  function showMsg(el, text, isError) {
+    el.textContent = text || "";
+    el.hidden = !text;
+    el.classList.toggle("error", !!isError);
+  }
+
+  // Fine graph-paper grid every 10 units.
+  (function buildFineGrid() {
+    var g = $("fineGrid"), ns = "http://www.w3.org/2000/svg";
+    for (var i = 10; i < 200; i += 10) {
+      if (i % 40 === 0 || i === 100) continue;
+      [[i, 0, i, 200], [0, i, 200, i]].forEach(function (c) {
+        var l = document.createElementNS(ns, "line");
+        l.setAttribute("x1", c[0]); l.setAttribute("y1", c[1]);
+        l.setAttribute("x2", c[2]); l.setAttribute("y2", c[3]);
+        l.setAttribute("vector-effect", "non-scaling-stroke");
+        g.appendChild(l);
+      });
+    }
+  })();
+
+  // ---------- rendering ----------
+  function render() {
+    document.body.setAttribute("data-mode", state.mode);
+    var has = state.x !== null;
+    you.hidden = !has || (state.mode === "results" && !state.submitted);
+    if (has) { you.style.left = pctX(state.x); you.style.top = pctY(state.y); }
+    hint.hidden = has || state.mode !== "edit";
+
+    $("editPanel").hidden = state.mode !== "edit";
+    $("resultsPanel").hidden = state.mode !== "results";
+
+    if (has) {
+      var zone = $("zone");
+      zone.textContent = "";
+      zone.appendChild(document.createTextNode(band(BANDS_X, state.x)));
+      var sep = document.createElement("span"); sep.className = "sep"; sep.textContent = " · ";
+      zone.appendChild(sep);
+      zone.appendChild(document.createTextNode(band(BANDS_Y, state.y)));
+      $("coords").textContent = "Benefit " + signed(state.x) + " · Usefulness " + signed(state.y) + " (of ±100)";
+    }
+    $("submitBtn").disabled = !has;
+    $("submitBtn").textContent = state.submitted ? "Update my dot" : "Submit my dot";
+    $("moveBtn").textContent = state.submitted ? "Move my dot" : "Add my dot";
+    $("peekBtn").hidden = state.submitted;
+    $("demoNotice").hidden = !!ENDPOINT;
+
+    renderResults();
+  }
+
+  function selection() {
+    if (!data) return [];
+    var out = [], si = filter === "all" ? -1 : data.sources.indexOf(filter), p = data.points;
+    for (var i = 0; i < p.length; i += 3) if (si < 0 || p[i + 2] === si) out.push(p[i], p[i + 1]);
+    return out;
+  }
+
+  function renderResults() {
+    drawCrowd();
+    if (state.mode !== "results" || !data) { avgEl.hidden = true; return; }
+
+    // filter chips
+    var counts = data.sources.map(function () { return 0; });
+    for (var i = 2; i < data.points.length; i += 3) counts[data.points[i]]++;
+    var total = data.points.length / 3;
+    var order = data.sources.map(function (s, i) { return i; })
+      .filter(function (i) { return counts[i] > 0; })
+      .sort(function (a, b) { return counts[b] - counts[a]; });
+    var chips = $("chips");
+    chips.textContent = "";
+    chips.hidden = order.length < 2;
+    var mk = function (key, label, n) {
+      var b = document.createElement("button");
+      b.type = "button"; b.className = "chip";
+      b.setAttribute("aria-pressed", String(filter === key));
+      b.appendChild(document.createTextNode(label));
+      var c = document.createElement("span"); c.className = "n"; c.textContent = fmt(n);
+      b.appendChild(c);
+      b.addEventListener("click", function () { filter = key; render(); });
+      chips.appendChild(b);
+    };
+    mk("all", "Everyone", total);
+    order.slice(0, 12).forEach(function (i) { mk(data.sources[i], srcLabel(data.sources[i]), counts[i]); });
+
+    var sel = selection(), n = sel.length / 2;
+    $("count").textContent = fmt(total) + (total === 1 ? " dot" : " dots") +
+      (filter !== "all" ? " · " + fmt(n) + " from " + srcLabel(filter) : "");
+
+    var q = { tl: 0, tr: 0, bl: 0, br: 0 }, sx = 0, sy = 0;
+    for (var j = 0; j < sel.length; j += 2) {
+      var x = sel[j], y = sel[j + 1];
+      sx += x; sy += y;
+      q[(y >= 0 ? "t" : "b") + (x < 0 ? "l" : "r")]++;
+    }
+    Array.prototype.forEach.call(document.querySelectorAll(".quad"), function (el) {
+      var k = el.getAttribute("data-q");
+      el.querySelector(".quad-pct").textContent = n ? Math.round(q[k] / n * 100) + "%" : "–";
+      el.querySelector(".quad-n").textContent = n ? fmt(q[k]) + (q[k] === 1 ? " dot" : " dots") : "";
+    });
+
+    if (n > 0) {
+      var ax = Math.round(sx / n), ay = Math.round(sy / n);
+      avgEl.hidden = false;
+      avgEl.style.left = pctX(ax); avgEl.style.top = pctY(ay);
+      avgEl.classList.toggle("flip", ax > 40);
+      var line = $("avgLine");
+      line.hidden = false;
+      line.textContent = "";
+      line.appendChild(document.createTextNode((filter === "all" ? "Average dot" : "Average for " + srcLabel(filter)) + ": "));
+      var s = document.createElement("strong");
+      s.textContent = band(BANDS_X, ax) + " · " + band(BANDS_Y, ay);
+      line.appendChild(s);
+      line.appendChild(document.createTextNode(" (" + signed(ax) + ", " + signed(ay) + ")"));
+    } else {
+      avgEl.hidden = true;
+      $("avgLine").hidden = true;
+    }
+  }
+
+  function token(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+
+  function drawCrowd() {
+    var rect = plot.getBoundingClientRect();
+    var dpr = window.devicePixelRatio || 1;
+    var w = Math.round(rect.width * dpr), h = Math.round(rect.height * dpr);
+    if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
+    var ctx = canvas.getContext("2d");
+    ctx.clearRect(0, 0, w, h);
+    if (state.mode !== "results" || !data) return;
+
+    var p = data.points, total = p.length / 3;
+    var r = Math.max(2.4, Math.min(4.5, rect.width / 110)) * dpr;
+    var alpha = total > 2000 ? 0.28 : total > 500 ? 0.4 : 0.6;
+    var si = filter === "all" ? -1 : data.sources.indexOf(filter);
+    var crowd = token("--crowd"), accent = token("--you");
+    var dot = function (x, y) {
+      ctx.beginPath();
+      ctx.arc((x + 100) / 200 * w, (100 - y) / 200 * h, r, 0, Math.PI * 2);
+      ctx.fill();
+    };
+    // Unselected first and faint, selected on top.
+    ctx.fillStyle = crowd;
+    ctx.globalAlpha = si < 0 ? alpha : 0.12;
+    for (var i = 0; i < p.length; i += 3) if (si < 0 || p[i + 2] !== si) dot(p[i], p[i + 1]);
+    if (si >= 0) {
+      ctx.fillStyle = accent;
+      ctx.globalAlpha = Math.min(0.75, alpha + 0.15);
+      for (var k = 0; k < p.length; k += 3) if (p[k + 2] === si) dot(p[k], p[k + 1]);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // ---------- placing the dot ----------
+  function placeFromEvent(e) {
+    var rect = plot.getBoundingClientRect();
+    state.x = clamp(((e.clientX - rect.left) / rect.width) * 200 - 100);
+    state.y = clamp(100 - ((e.clientY - rect.top) / rect.height) * 200);
+    render();
+  }
+
+  var dragging = null, pending = null;
+  function startDrag(e) {
+    dragging = e.pointerId;
+    try { plot.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
+    plot.classList.add("dragging");
+  }
+  function endDrag() {
+    dragging = null; pending = null;
+    plot.classList.remove("dragging");
+  }
+
+  plot.addEventListener("pointerdown", function (e) {
+    if (state.mode !== "edit") return;
+    if (e.pointerType === "mouse" && e.button !== 0) return;
+    if (e.target.closest(".you")) { e.preventDefault(); startDrag(e); return; }
+    if (e.pointerType === "mouse") { e.preventDefault(); placeFromEvent(e); startDrag(e); return; }
+    // Touch and pen: a tap places the dot; a horizontal drag places and drags;
+    // a vertical swipe scrolls the page (the browser cancels the pointer).
+    pending = { id: e.pointerId, x: e.clientX, y: e.clientY };
+  });
+  plot.addEventListener("pointermove", function (e) {
+    if (dragging === e.pointerId) { e.preventDefault(); placeFromEvent(e); return; }
+    if (pending && pending.id === e.pointerId && Math.abs(e.clientX - pending.x) > 6) {
+      pending = null; startDrag(e); placeFromEvent(e);
+    }
+  });
+  plot.addEventListener("pointerup", function (e) {
+    if (pending && pending.id === e.pointerId) placeFromEvent(e);
+    endDrag();
+  });
+  plot.addEventListener("pointercancel", endDrag);
+  plot.addEventListener("lostpointercapture", function () { if (dragging !== null) endDrag(); });
+
+  plot.addEventListener("keydown", function (e) {
+    if (state.mode !== "edit") return;
+    var step = e.shiftKey ? 10 : 2, dx = 0, dy = 0;
+    if (e.key === "ArrowLeft") dx = -step;
+    else if (e.key === "ArrowRight") dx = step;
+    else if (e.key === "ArrowUp") dy = step;
+    else if (e.key === "ArrowDown") dy = -step;
+    else if (e.key === "Enter" && state.x !== null) { submit(); return; }
+    else return;
+    e.preventDefault();
+    if (state.x === null) { state.x = 0; state.y = 0; }
+    state.x = clamp(state.x + dx); state.y = clamp(state.y + dy);
+    render();
+  });
+
+  // ---------- network ----------
+  function submit() {
+    if (state.x === null) return;
+    var btn = $("submitBtn");
+    btn.disabled = true; btn.textContent = "Saving…";
+    showMsg($("editMsg"), "");
+    var done = function () {
+      state.submitted = true; state.mode = "results"; save();
+      render(); fetchResults();
+      window.scrollTo({ top: Math.max(0, plot.getBoundingClientRect().top + window.scrollY - 16), behavior: "smooth" });
+    };
+    if (!ENDPOINT) { done(); return; }
+    fetch(ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({ id: state.id, x: state.x, y: state.y, source: state.src, peeked: state.peeked })
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        if (!j || !j.ok) throw new Error((j && j.error) || "save_failed");
+        done();
+      })
+      .catch(function (err) {
+        render();
+        showMsg($("editMsg"), err && err.message === "busy"
+          ? "Lots of people are answering right now. Wait a few seconds and press Submit again."
+          : "Your dot didn't save. Check your connection and press Submit again.", true);
+      });
+  }
+
+  function fetchResults() {
+    if (!ENDPOINT) {
+      data = { sources: [state.src], points: state.submitted && state.x !== null ? [state.x, state.y, 0] : [] };
+      render();
+      return;
+    }
+    $("count").textContent = data ? $("count").textContent : "Loading dots…";
+    showMsg($("resultsMsg"), "");
+    fetch(ENDPOINT + (ENDPOINT.indexOf("?") < 0 ? "?" : "&") + "t=" + Math.floor(Date.now() / 15000))
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        if (!j || !Array.isArray(j.points) || !Array.isArray(j.sources)) throw new Error("bad_data");
+        data = { sources: j.sources.map(String), points: j.points.map(Number) };
+        if (filter !== "all" && data.sources.indexOf(filter) < 0) filter = "all";
+        render();
+      })
+      .catch(function () {
+        if (!data) $("count").textContent = "Results didn't load.";
+        showMsg($("resultsMsg"), "Couldn't reach the results. Press Refresh to try again.", true);
+      });
+  }
+
+  // ---------- buttons ----------
+  $("submitBtn").addEventListener("click", submit);
+  $("peekBtn").addEventListener("click", function () {
+    state.peeked = true; state.mode = "results"; save(); render(); fetchResults();
+  });
+  $("moveBtn").addEventListener("click", function () {
+    state.mode = "edit"; render();
+    plot.focus({ preventScroll: true });
+  });
+  $("refreshBtn").addEventListener("click", fetchResults);
+  $("copyBtn").addEventListener("click", function () {
+    var url = location.origin + location.pathname;
+    var ok = function () { showMsg($("resultsMsg"), "Link copied."); };
+    var fail = function () { showMsg($("resultsMsg"), "Copy this link: " + url); };
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(ok, fail);
+      else fail();
+    } catch (e) { fail(); }
+  });
+
+  // Redraw the canvas on resize and theme change.
+  if (window.ResizeObserver) new ResizeObserver(function () { drawCrowd(); }).observe(plot);
+  else window.addEventListener("resize", drawCrowd);
+  try { matchMedia("(prefers-color-scheme: dark)").addEventListener("change", drawCrowd); } catch (e) { /* old browsers */ }
+  new MutationObserver(drawCrowd).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+
+  render();
+  if (state.mode === "results") fetchResults();
+})();
+</script>
+<!--ARTIFACT-END-->
+</body>
+</html>
