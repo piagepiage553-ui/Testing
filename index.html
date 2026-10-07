@@ -463,7 +463,7 @@ footer p { margin: 0; max-width: 62ch; }
       <h2>Where everyone landed</h2>
       <p class="count" id="count">Loading dots…</p>
     </div>
-    <p class="notice" id="demoNotice" hidden>Preview mode. The results sheet isn't connected yet, so your dot is saved only in this browser.</p>
+    <p class="notice" id="demoNotice" hidden>Preview mode. Results aren't connected here, so your dot is saved only in this browser.</p>
     <div class="chips" id="chips" role="group" aria-label="Filter by community"></div>
     <p class="avg-line" id="avgLine" hidden></p>
     <div class="quads" id="quads">
@@ -489,8 +489,8 @@ footer p { margin: 0; max-width: 62ch; }
 (function () {
   "use strict";
 
-  // Google Apps Script web app URL (see README.md). Empty = preview mode, nothing leaves the browser.
-  var ENDPOINT = "";
+  // Netlify Function that stores the dots (netlify/functions/dots.mjs). Empty = preview mode, nothing leaves the browser.
+  var ENDPOINT = "/api/dots";
 
   var STORE_KEY = "aicompass.v1";
   var BANDS_X = [["Catastrophic", -60], ["Net harmful", -20], ["Mixed bag", 20], ["Net helpful", 60], ["Golden age", 100]];
